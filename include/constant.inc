@@ -1,7 +1,7 @@
 ; Descriptor Attribute
 
 ; TYPE
-; DATA TYPE
+; Data Type
 DA_DTR		EQU	0	; Read only
 DA_DTRA		EQU	1	; Read only, Accessed
 DA_DTRW		EQU	2	; Read, Write
@@ -11,7 +11,7 @@ DA_DTREA	EQU	5	; Read, Downward Expand, Accessed
 DA_DTRWE	EQU	6	; Read, Write, Downward Expand
 DA_DTRWEA	EQU	7	; Read, Write, Downward Expand, Accessed
 
-; CODE TYPE
+; Code Type
 DA_CTE		EQU	8	; Execute
 DA_CTEA		EQU	9	; Execute, Accessed
 DA_CTER		EQU	0AH	; Execute, Read
@@ -22,7 +22,7 @@ DA_CTERCO	EQU	0EH	; Execute, Read, Consistent
 DA_CTERCOA	EQU	0FH	; Execute, Read, Consistent, Accessed
 ; TYPE End
 
-; S: Segment type
+; S: Segment Type
 DA_SG	EQU	0	; System or Gate
 DA_DC	EQU	1	; Data or Code
 
@@ -37,14 +37,25 @@ DA_P	EQU	80H
 DA_NP	EQU	00H
 
 ; D/B
-DA_32	EQU	4000H
+; Code Segment
+DA_D32	EQU	4000H	; 32 bit address, 32 bit or 8 bit operand
+DA_D16	EQU	0000H	; 16 bit address, 16 bit or 8 bit operand
+
+; Extend Data Segment
+DA_DB4GB	EQU	4000H	; Stack segment upper limits 4GB
+DA_DB64KB	EQU	0000H	; Stack segment upper limits 64KB
+
+; Stack Segment
+DA_SB32		EQU	4000H	; Use 32 bit esp
+DA_SB16		EQU	0000H	; Use 16 bit sp
+; D/B End
 
 ; G: Granularity
 DA_G1B	EQU	0000H
 DA_G4KB	EQU	8000H
 
-; DATA Segment
+; Data Segment
 DA_DRW	EQU	DA_P | DA_DC | DA_DTRW
 
-; CODE Segment
+; Code Segment
 DA_CE	EQU	DA_P | DA_DC | DA_CTE
