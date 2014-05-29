@@ -23,8 +23,8 @@ DA_CTERCOA	EQU	0FH	; Execute, Read, Consistent, Accessed
 ; TYPE End
 
 ; S: Segment Type
-DA_SG	EQU	0	; System or Gate
-DA_DC	EQU	1	; Data or Code
+DA_SG	EQU	00H	; System or Gate
+DA_DC	EQU	10H	; Data or Code
 
 ; DPL: Descriptor Privilege Level
 DA_DPL0		EQU	00H
@@ -37,15 +37,15 @@ DA_P	EQU	80H
 DA_NP	EQU	00H
 
 ; D/B
-; Code Segment
-DA_D32	EQU	4000H	; 32 bit address, 32 bit or 8 bit operand
-DA_D16	EQU	0000H	; 16 bit address, 16 bit or 8 bit operand
+; D: Code Segment
+DA_CD32	EQU	4000H	; 32 bit address, 32 bit or 8 bit operand
+DA_CD16	EQU	0000H	; 16 bit address, 16 bit or 8 bit operand
 
-; Extend Data Segment
+; B: Extend Data Segment
 DA_DB4GB	EQU	4000H	; Stack segment upper limits 4GB
 DA_DB64KB	EQU	0000H	; Stack segment upper limits 64KB
 
-; Stack Segment
+; B: Stack Segment
 DA_SB32		EQU	4000H	; Use 32 bit esp
 DA_SB16		EQU	0000H	; Use 16 bit sp
 ; D/B End
