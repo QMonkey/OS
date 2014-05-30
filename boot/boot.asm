@@ -1,7 +1,7 @@
 %include "constant.inc"
 %include "protect_mode.inc"
 
-	org	07c00h
+	org	0100h
 	jmp	boot
 
 ; GDT
@@ -20,6 +20,8 @@ GdtPtr	dw	GdtLen - 1
 SelectorCode32	equ	GDT_CODE32 - GDT
 SelectorVideo	equ	GDT_VIDEO - GDT
 
+[SECTION .s16]
+[BITS 16]
 boot:
 	mov	ax, cs
 	mov	ds, ax
@@ -64,6 +66,8 @@ boot:
 	mov	cr0, eax
 	jmp	dword	SelectorCode32: 0
 
+[SECTION .s32]
+[BITS 32]
 Code32:
 	mov	ax, SelectorVideo
 	mov	gs, ax
