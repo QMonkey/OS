@@ -8,7 +8,7 @@
 GDT:
 	PMDescriptor 0, 0, 0
 GDT_CODE32:
-	PMDescriptor 0, Code32Len - 1, DA_CE + DA_CD32
+	PMDescriptor 0, Code32Len - 1, DA_CE | DA_CD32
 GDT_VIDEO:
 	PMDescriptor 0b8000h, 0ffffh, DA_DRW
 ; GDT End
