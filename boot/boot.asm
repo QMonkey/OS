@@ -1,7 +1,7 @@
 %include "constant.inc"
 %include "protect_mode.inc"
 
-	org	0100h
+	org	07c00h
 	jmp	boot
 
 ; GDT
@@ -29,14 +29,14 @@ boot:
 	mov	ss, ax
 	mov	sp, 0100h
 
-;	mov	ax, rmStr
-;	mov	bp, ax
-;	mov	ah, 13h
-;	mov	al, 01h
-;	mov	cx, rmLen
-;	mov	dx, 0
-;	mov	bx, 000ch
-;	int	10H
+	mov	ax, rmStr
+	mov	bp, ax
+	mov	ah, 13h
+	mov	al, 01h
+	mov	cx, rmLen
+	mov	dx, 0
+	mov	bx, 000ch
+	int	10H
 
 	xor	eax, eax
 	mov	ax, cs
@@ -72,10 +72,15 @@ Code32:
 	mov	ax, SelectorVideo
 	mov	gs, ax
 	xor	edi, edi
-	mov	edi, (80 * 11 + 79) * 2
+	mov	edi, (80 * 1 + 0) * 2
+	mov	esi, pmStr
 	mov	ah, 0ch
-	mov	al, 'P'
+	mov	ecx, pmLen
+.loop:
+	lodsb
 	mov	[gs:edi], ax
+	add	edi, 2
+	loop	.loop
 
 halt:
 	hlt
@@ -84,8 +89,8 @@ halt:
 Code32Len	equ	$-Code32
 
 rmStr:
-	db	"Real Mode", 0ah, 0dh
+	db	"Real Mode"
 rmLen	equ	$-rmStr
 pmStr:
-	db	"Protect Mode", 0ah, 0dh
+	db	"Protect Mode"
 pmLen	equ	$-pmStr
