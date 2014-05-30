@@ -85,6 +85,3 @@ rmLen	equ	$-rmStr
 pmStr:
 	db	"Protect Mode", 0ah, 0dh
 pmLen	equ	$-pmStr
-
-	resb	510-($-$$)
-	dw	0xaa55
