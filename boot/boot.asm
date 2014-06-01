@@ -1,98 +1,181 @@
 %include "constant.inc"
-%include "protect_mode.inc"
 
-	org	07c00h
+org	07c00h
 	jmp	boot
 
-; GDT
-GDT:
-	PMDescriptor 0, 0, 0
-GDT_CODE32:
-	PMDescriptor 0, Code32Len - 1, DA_CE | DA_CD32
-;GDT_CODE16:
-;	PMDescriptor 0, 0ffffh, DA_CE
-GDT_VIDEO:
-	PMDescriptor 0b8000h, 0ffffh, DA_DRW
-; GDT End
-
-GdtLen	equ	$ - GDT
-GdtPtr	dw	GdtLen - 1
-	dd	0
-
-SelectorCode32	equ	GDT_CODE32 - GDT
-SelectorVideo	equ	GDT_VIDEO - GDT
-
-[SECTION .s16]
-[BITS 16]
 boot:
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
-	mov	ss, ax
-	mov	sp, 0100h
-
-	mov	ax, rmStr
-	mov	bp, ax
-	mov	ah, 13h
-	mov	al, 01h
-	mov	cx, rmLen
-	mov	dx, 0
-	mov	bx, 000ch
-	int	10H
-
-	xor	eax, eax
-	mov	ax, cs
-	shl	eax, 4
-	add	eax, Code32
-	mov	[GDT_CODE32 + 2], ax
-	shr	eax, 16
-	mov	[GDT_CODE32 + 4], al
-	mov	[GDT_CODE32 + 7], ah
-
-	xor	eax, eax
-	mov	ax, ds
-	shl	eax, 4
-	add	eax, GDT
-	mov	[GdtPtr + 2], eax
-
-	lgdt	[GdtPtr]
-
-	cli
-
-	in	al, 92h
-	or	al, 2
-	out	92h, al
-
-	mov	eax, cr0
-	or	eax, 1
-	mov	cr0, eax
-	jmp	dword	SelectorCode32: 0
-
-[SECTION .s32]
-[BITS 32]
-Code32:
-	mov	ax, SelectorVideo
+	mov	fs, ax
 	mov	gs, ax
-	xor	edi, edi
-	mov	edi, (80 * 1 + 0) * 2
-	mov	esi, pmStr
-	mov	ah, 0ch
-	mov	ecx, pmLen
-.loop:
-	lodsb
-	mov	[gs:edi], ax
-	add	edi, 2
-	loop	.loop
+	mov	ss, ax
+	mov	sp, 100h
 
-halt:
+.clear:
+	; Clear screen
+	mov	ah, 06h
+	xor	al, al
+	mov	bh, 07h
+	xor	bl, bl
+	xor	cx, cx
+	mov	dx, 184fh
+	int	10h
+
+	; Display .booting
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .booting
+	push	ax
+	xor	ax, ax
+	push	ax
+	mov	ax, .booting_len
+	push	ax
+	call	.display_str
+	add	sp, 6
+
+.load:
+	; Display .loading
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .loading
+	push	ax
+	mov	ax, 0100h
+	push	ax
+	mov	ax, .loading_len
+	push	ax
+	call	.display_str
+	add	sp, 6
+
+	; Reset floppy
+	xor	ah, ah
+	xor	dl, dl
+	int	13h
+
+	; Read loader
+	mov	ax, LD_BASE
+	mov	es, ax
+	mov	bx, LD_OFFSET
+	mov	ah, 02h
+	mov al, 4
+	xor	ch, ch
+	mov	cl, 2
+	xor dx, dx
+	int	13h
+	jnc	.load_err
+	test	ah, ah
+	jnz	.load_err
+
+	; Display .load_successfully
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .load_successfully
+	push	ax
+	mov	ax, 0200h
+	push	ax
+	mov	ax, .load_successfully_len
+	push	ax
+	call	.display_str
+	add	sp, 6
+
+	; Display .checking
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .checking
+	push	ax
+	mov	ax, 0300h
+	push	ax
+	mov	ax, .checking_len
+	push	ax
+	call	.display_str
+	add	sp, 6
+
+	; Check loader
+	mov	ax, LD_BASE
+	mov	es, ax
+	mov	bx, LD_OFFSET
+	mov	ax, [es: bx + LD_SIZE - 2]
+	cmp	ax, 0aa55h
+	jne	.invalid_loader_err
+
+	jmp	LD_BASE: LD_OFFSET
+
+.display_str:
+	push	bp
+	mov	bp, sp
+	push	ax
+	push	bx
+	push	cx
+	push	dx
+
+	mov	cx, [bp + 4]
+	mov	dx, [bp + 6]
+	mov	ax, [bp + 8]
+	mov	bp, ax
+	mov	ax, 1301h
+	mov	bx, 0007h
+	int	10h
+
+	pop	dx
+	pop	cx
+	pop	bx
+	pop	ax
+	pop	bp
+	ret
+
+.load_err:
+	; Display .load_err
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .load_err_msg
+	push	ax
+	mov	ax, 0200h
+	push	ax
+	mov	ax, .load_err_msg_len
+	push	ax
+	call	.display_str
+	jmp	.halt
+
+.invalid_loader_err:
+	; Display .invalid_loader_err
+	mov	ax, cs
+	mov	es, ax
+	mov	ax, .invalid_loader_err_msg
+	push	ax
+	mov	ax, 0400h
+	push	ax
+	mov	ax, .invalid_loader_err_msg_len
+	push	ax
+	call	.display_str
+	jmp	.halt
+
+.halt:
 	hlt
-	jmp	halt
+	jmp	.halt
 
-Code32Len	equ	$-Code32
+.booting:
+	db	"Booting..."
+.booting_len	equ	$ - .booting
 
-rmStr:
-	db	"Real Mode"
-rmLen	equ	$-rmStr
-pmStr:
-	db	"Protect Mode"
-pmLen	equ	$-pmStr
+.loading:
+	db	"Loading..."
+.loading_len	equ	$ - .loading
+
+.load_err_msg:
+	db	"Failed to load!"
+.load_err_msg_len	equ	$ - .load_err_msg
+
+.load_successfully:
+	db	"Successfully load the loader!"
+.load_successfully_len	equ	$ - .load_successfully
+
+.checking:
+	db	"Checking..."
+.checking_len	equ	$ - .checking
+
+.invalid_loader_err_msg:
+	db	"Invalid loader!"
+.invalid_loader_err_msg_len	equ	$ - .invalid_loader_err_msg
+
+	resb	510 - ($ - $$)
+	db	55h, 0aah

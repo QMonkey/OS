@@ -1,5 +1,4 @@
 ; Descriptor Attribute
-
 ; TYPE
 ; Data Type
 DA_DTR		EQU	0	; Read only
@@ -59,3 +58,13 @@ DA_DRW	EQU	DA_P | DA_DC | DA_DTRW
 
 ; Code Segment
 DA_CE	EQU	DA_P | DA_DC | DA_CTE
+; Descriptor Attribute End
+
+; Loader Base
+LD_BASE	EQU	9000h
+
+; Loader Offset
+LD_OFFSET	EQU	100h
+
+; Loader Size
+LD_SIZE	EQU	800h
