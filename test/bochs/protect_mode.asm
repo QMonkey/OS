@@ -4,33 +4,26 @@
 	org	0100h
 	jmp	boot
 
-GDT:
-	PMDescriptor 0, 0, 0
+; GDT
+GDT: PMDescriptor 0, 0, 0
 GDT_CODE32:
 	PMDescriptor 0, Code32Len - 1, DA_CE | DA_CD32
 GDT_CODE16:
-	PMDescriptor 0, 0ffffh, DA_CE
-GDT_DATA:
-	PMDescriptor 0, DataLen - 1, DA_DRW
+	PMDescriptor 0, Code16Len - 1, DA_CE
 GDT_VIDEO:
 	PMDescriptor 0b8000h, 0ffffh, DA_DRW
 GDT_NORMAL:
 	PMDescriptor 0, 0ffffh, DA_DRW
+; GDT End
 
-GdtLen	equ	$-GDT
+GdtLen	equ	$ - GDT
 GdtPtr	dw	GdtLen - 1
 	dd	0
 
 SelectorCode32	equ	GDT_CODE32 - GDT
 SelectorCode16	equ	GDT_CODE16 - GDT
-SelectorData	equ	GDT_DATA - GDT
 SelectorVideo	equ	GDT_VIDEO - GDT
 SelectorNormal	equ	GDT_NORMAL - GDT
-
-data_segment:
-	resb	26
-
-DataLen	equ	$-data_segment
 
 [SECTION .s16]
 [BITS 16]
@@ -39,6 +32,16 @@ boot:
 	mov	ds, ax
 	mov	es, ax
 	mov	ss, ax
+	mov	sp, 0100h
+
+	mov	ax, rmStr
+	mov	bp, ax
+	mov	ah, 13h
+	mov	al, 01h
+	mov	cx, rmLen
+	mov	dx, 0
+	mov	bx, 000ch
+	int	10H
 
 	xor	eax, eax
 	mov	ax, cs
@@ -51,21 +54,12 @@ boot:
 
 	xor	eax, eax
 	mov	ax, cs
-	shl	eax, 4
+	shl	ax, 4
 	add	eax, Code16
 	mov	[GDT_CODE16 + 2], ax
 	shr	eax, 16
 	mov	[GDT_CODE16 + 4], al
 	mov	[GDT_CODE16 + 7], ah
-
-	xor	eax, eax
-	mov	ax, ds
-	shl	eax, 4
-	add	eax, data_segment
-	mov	[GDT_DATA + 2], ax
-	shr	eax, 16
-	mov	[GDT_DATA + 4], al
-	mov	[GDT_DATA + 7], ah
 
 	xor	eax, eax
 	mov	ax, ds
@@ -89,18 +83,19 @@ boot:
 [SECTION .s32]
 [BITS 32]
 Code32:
-	mov	ax, SelectorData
-	mov	ds, ax
+	mov	ax, SelectorVideo
+	mov	gs, ax
 	xor	edi, edi
-
-	mov	cx, 26
-	cld
+	mov	edi, (80 * 1 + 0) * 2
+	mov	esi, pmStr
+	mov	ah, 0ch
+	mov	ecx, pmLen
 .loop:
-	mov	al, 'A'
-	stosb
+	lodsb
+	mov	[gs:edi], ax
+	add	edi, 2
 	loop	.loop
 	jmp	SelectorCode16: 0
-
 Code32Len	equ	$-Code32
 
 [SECTION .s16]
@@ -109,29 +104,46 @@ Code16:
 	mov	ax, SelectorNormal
 	mov	ds, ax
 	mov	es, ax
-	mov fs, ax
+	mov	fs, ax
 	mov	gs, ax
+	mov	ss, ax
 
 	mov	eax, cr0
-	and	eax, 0fffffffeh
+	and	al, 0feh
 	mov	cr0, eax
 	jmp	0: real
+Code16Len	equ	$-Code16
 
-[SECTION .real]
-[BITS 16]
 real:
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
-	mov fs, ax
-	mov gs, ax
+	mov	fs, ax
+	mov	gs, ax
+	mov	ss, ax
 
-	in al, 92h
+	in	al, 92h
 	and	al, 0fdh
-	out 92h, al
+	out	92h, al
 
 	sti
 
-.halt:
+;	mov	ax, rmStr
+;	mov	bp, ax
+;	mov	ah, 13h
+;	mov	al, 01h
+;	mov	cx, rmStr
+;	mov	dx, 0
+;	mov	bx, 000ch
+;	int	10H
+
+halt:
 	hlt
-	jmp	.halt
+	jmp	halt
+
+rmStr:
+	db	"Real Mode"
+rmLen	equ	$-rmStr
+pmStr:
+	db	"Protect Mode"
+pmLen	equ	$-pmStr
