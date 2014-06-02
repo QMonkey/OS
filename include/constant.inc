@@ -56,8 +56,11 @@ DA_G4KB	EQU	8000H
 ; Data Segment
 DA_DRW	EQU	DA_P | DA_DC | DA_DTRW
 
-; Code Segment
+; Code Segment (Execute)
 DA_CE	EQU	DA_P | DA_DC | DA_CTE
+
+; Code Segment (Execute, Read)
+DA_CER	EQU	DA_P | DA_DC | DA_CTER
 ; Descriptor Attribute End
 
 ; Loader Base
@@ -68,3 +71,9 @@ LD_OFFSET	EQU	100h
 
 ; Loader Size
 LD_SIZE	EQU	800h
+
+; Kernel Base
+KN_BASE	EQU	3040h
+
+; Kernel Offset
+KN_OFFSET	EQU	0
